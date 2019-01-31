@@ -287,11 +287,22 @@
 (defn bake-cake []
   (add 2 :flour)
   (add 2 :egg)
-  (add 1 :milk)
-  (add 1 :sugar)
+  (add :milk)
+  (add :sugar)
   (mix)
   (pour-into-pan)
   (bake-pan 25)
   (cool-pan))
+
+(defn bake-cookies []
+  (add :egg)
+  (add :flour)
+  (add :sugar)
+  (add :butter)
+  (mix)
+  (pour-into-pan)
+  (bake-pan 30)
+  (cool-pan))
+
 (defn -main []
   (day-at-the-bakery))
