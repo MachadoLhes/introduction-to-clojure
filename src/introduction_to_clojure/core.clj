@@ -223,18 +223,6 @@
   (squeeze)
   (add-to-bowl))
 
-(defn bake-cake [] 
-  (add :flour) 
-  (add :flour) 
-  (add :egg) 
-  (add :egg) 
-  (add :milk) 
-  (add :sugar) 
-  (mix) 
-  (pour-into-pan) 
-  (bake-pan 25) 
-  (cool-pan))
-
 (defn scooped? [ingredient]
   (cond
     (= ingredient :milk)
@@ -282,14 +270,28 @@
       (println ingredient "is not simple")
       :error)))
 
-(defn add [ingredient]
-  (cond
-    (simple? ingredient)   (add-simple ingredient)
-    (scooped? ingredient)  (add-scooped ingredient)
-    (squeezed? ingredient) (add-squeezed ingredient)
-    :else                  (do
-                             (println "I don't know the ingredient" ingredient)
-                             :error)))
+(defn add 
+  ([ingredient]
+   (cond
+     (simple? ingredient)   (add-simple ingredient)
+     (scooped? ingredient)  (add-scooped ingredient)
+     (squeezed? ingredient) (add-squeezed ingredient)
+     :else                  (do
+                              (println "I don't know the ingredient" ingredient)
+                              :error)))
+  ([num ingredient]
+   (dotimes [i num]
+     (add ingredient))
+   :ok))
 
+(defn bake-cake []
+  (add 2 :flour)
+  (add 2 :egg)
+  (add 1 :milk)
+  (add 1 :sugar)
+  (mix)
+  (pour-into-pan)
+  (bake-pan 25)
+  (cool-pan))
 (defn -main []
   (day-at-the-bakery))
