@@ -196,5 +196,100 @@
                      :rackids racks}]
         (delivery receipt)))))
 
+(defn add-flour [] 
+  (grab :cup) 
+  (scoop :flour) 
+  (add-to-bowl) 
+  (release))
+
+(defn add-milk [] 
+  (grab :cup) 
+  (scoop :milk) 
+  (add-to-bowl) 
+  (release))
+
+(defn add-sugar [] 
+  (grab :cup) 
+  (scoop :sugar) 
+  (add-to-bowl) 
+  (release))
+
+(defn add-butter [] 
+  (grab :butter) 
+  (add-to-bowl))
+
+(defn add-egg []
+  (grab :egg)
+  (squeeze)
+  (add-to-bowl))
+
+(defn bake-cake [] 
+  (add :flour) 
+  (add :flour) 
+  (add :egg) 
+  (add :egg) 
+  (add :milk) 
+  (add :sugar) 
+  (mix) 
+  (pour-into-pan) 
+  (bake-pan 25) 
+  (cool-pan))
+
+(defn scooped? [ingredient]
+  (cond
+    (= ingredient :milk)
+    true
+    (= ingredient :flour)
+    true
+    (= ingredient :sugar)
+    true
+    :else
+    false))
+
+(defn squeezed? [ingredient]
+  (= ingredient :egg))
+
+(defn simple? [ingredient] 
+  (= ingredient :butter))
+
+(defn add-scooped [ingredient]
+  (if (scooped? ingredient)
+    (do
+      (grab :cup)
+      (scoop ingredient)
+      (add-to-bowl)
+      (release))
+    (do
+      (println ingredient "is not scoopable")
+      :error)))
+
+(defn add-squeezed [ingredient]
+  (if (squeezed? ingredient)
+    (do
+      (grab ingredient)
+      (squeeze)
+      (add-to-bowl))
+    (do
+      (println ingredient "is not squeezable")
+      :error)))
+
+(defn add-simple [ingredient]
+  (if (simple? ingredient)
+    (do
+      (grab ingredient)
+      (add-to-bowl))
+    (do
+      (println ingredient "is not simple")
+      :error)))
+
+(defn add [ingredient]
+  (cond
+    (simple? ingredient)   (add-simple ingredient)
+    (scooped? ingredient)  (add-scooped ingredient)
+    (squeezed? ingredient) (add-squeezed ingredient)
+    :else                  (do
+                             (println "I don't know the ingredient" ingredient)
+                             :error)))
+
 (defn -main []
   (day-at-the-bakery))
