@@ -5,34 +5,17 @@
   (apply println args)
   :error)
 
-(defn add-egg []
-  (grab :egg)
-  (squeeze)
-  (add-to-bowl))
+(def baking {:recipes {:cake {:ingredients {:egg   2
+                                             :flour 2
+                                             :sugar 1
+                                             :milk  1}
+                               :steps [[:add :all]
+                                       [:mix]
+                                       [:pour]
+                                       [:bake 25]
+                                       [:cool]]}}})
 
-(defn add-flour []
-  (grab :cup)
-  (scoop :flour)
-  (add-to-bowl)
-  (release))
-
-(defn add-milk []
-  (grab :cup)
-  (scoop :milk)
-  (add-to-bowl)
-  (release))
-
-(defn add-sugar []
-  (grab :cup)
-  (scoop :sugar)
-  (add-to-bowl)
-  (release))
-
-(defn add-butter []
-  (grab :butter)
-  (add-to-bowl))
-
-(def scoop-ingredients #{:milk :flour :sugar})
+(def scoop-ingredients #{:milk :flour :sugar :cocoa})
 
 (def squeeze-ingredients #{:egg})
 
@@ -46,31 +29,6 @@
 
 (defn simple? [ingredient]
   (contains? simple-ingredients ingredient))
-
-(defn add-eggs [n]
-  (dotimes [e n]
-    (add-egg))
-  :ok)
-
-(defn add-flour-cups [n]
-  (dotimes [e n]
-    (add-flour))
-  :ok)
-
-(defn add-milk-cups [n]
-  (dotimes [e n]
-    (add-milk))
-  :ok)
-
-(defn add-sugar-cups [n]
-  (dotimes [e n]
-    (add-sugar))
-  :ok)
-
-(defn add-butters [n]
-  (dotimes [e n]
-    (add-butter))
-  :ok)
 
 (defn add-squeezed
   ([ingredient amount]
@@ -144,7 +102,20 @@
   (bake-pan 30)
   (cool-pan))
 
-(def pantry-ingredients #{:flour :sugar})
+(defn bake-brownie []
+  (add :butter 2)
+  (add :sugar 1)
+  (add :cocoa 2)
+  (mix)
+  (add :egg 2)
+  (add :flour 2)
+  (add :milk 1)
+  (mix)
+  (pour-into-pan)
+  (bake-pan 35)
+  (cool-pan))
+
+(def pantry-ingredients #{:flour :sugar :cocoa})
 
 (def fridge-ingredients #{:milk :egg :butter})
 
@@ -200,6 +171,13 @@
                            :sugar   1
                            :butter  1})
 
+(def brownie-shopping-list {:flour  2
+                            :egg    2
+                            :sugar  1
+                            :cocoa  2
+                            :milk   1
+                            :butter 2})
+
 (defn load-up-amount [ingredient amount]
   (dotimes [i amount]
     (load-up ingredient)))
@@ -230,16 +208,20 @@
           [(first kv) (* amount (second kv))])))
 
 (defn get-shopping-list [key]
-  (case key
-    :cake   cake-shopping-list
-    :cookie cookie-shopping-list
-    (error "Can't find shopping list for" key)))
+  (cond 
+    (= :cake key)   cake-shopping-list
+    (= :cookie key) cookie-shopping-list
+    (= :brownie key) brownie-shopping-list
+    :else (error "Can't find shopping list for" key)))
+
 
 (defn order->ingredients [order]
   (let [items (get order :items)]
     (add-ingredients 
-     (multiply-ingredients cake-shopping-list (get items :cake 0)) 
-     (multiply-ingredients cookie-shopping-list (get items :cookies 0)))))
+     (multiply-ingredients cake-shopping-list (get items :cake 0))
+     (add-ingredients 
+      (multiply-ingredients cookie-shopping-list (get items :cookies 0))
+      (multiply-ingredients brownie-shopping-list (get items :brownie 0))))))
 
 (defn orders->ingredients [orders]
   (reduce add-ingredients {}
@@ -247,23 +229,49 @@
             (order->ingredients order))))
 
 (defn bake [item]
-  (case item
-    :cake   (bake-cake)
-    :cookie (bake-cookies)
-    (error "I don't know how to bake" :item)))
+  (cond 
+    (= :cake item)   (bake-cake)
+    (= :cookie item) (bake-cookies)
+    (= :brownie item) (bake-brownie)
+    :else (error "I don't know how to bake" :item)))
+
+(defn perform [ingredients step]
+  (cond
+    (= :cool (first step)) (cool-pan)
+    (= :mix (first step))  (mix)
+    (= :pour (first step)) (pour-into-pan)
+    (= :bake (first step)) (bake (second step))
+    (= :add (first step))  (cond
+                             (and (= 2 (count step))
+                                  (= :all (second step)))
+                             (doseq [kv ingredients]
+                               (add (first kv) (second kv)))
+                             (and (= 2 (count step)) (contains? ingredients (second step)))
+                             (add (second step) (get ingredients (second step)))
+                             (= 3 (count step))
+                             (add (second step) (get step 2))
+                             :else 
+                             (error "I don't know how to add" (second step)))
+    :else (error "I don't know the step" (first step))))
+
+(defn bake-recipe [recipe]
+  (let [ingredients (get recipe :ingredients)]
+    (doseq [step (get recipe :steps)]
+      (perform (get recipe ingredients) step))))
 
 (defn day-at-the-bakery []
-  (let [orders (get-morning-orders)
+  (let [orders (get-morning-orders-day3)
         ingredients (orders->ingredients orders)]
     (fetch-list ingredients)
     (doseq [order orders]
       (let [items (get order :items)
             racks (for [kv items
                         i (range (second kv))]
-                    (bake (first kv)))]
-        (delivery {:orderid (get order :orderid)
-                   :address (get order :address)
-                   :rackids racks})))))
+                    (bake (first kv)))
+            receipt {:orderid (get order :orderid)
+                     :address (get order :address)
+                     :rackids racks}]
+        (delivery receipt)))))
 
 (defn -main []
   (day-at-the-bakery))
